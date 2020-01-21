@@ -1,0 +1,5 @@
+docopt
+spotipy
+pyperclip
+appdirs
+colored
