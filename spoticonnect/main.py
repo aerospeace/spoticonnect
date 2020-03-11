@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import datetime
+import sys
+
 import click
 from spoticonnect.configuration import Configuration
 
@@ -132,17 +134,19 @@ def transfer(ctx, device_name):
     sp.transfer_playback(device_id)
 
 
+@cli.command()
+@click.pass_context
+def is_playing(ctx):
+    sp = ctx.obj['sp']
+    currently_playing = sp.currently_playing()
+    if not currently_playing['is_playing']:
+        sys.exit(1)
+
+
 def main():
     from click.testing import CliRunner
     runner = CliRunner()
-    runner.invoke(cli, ['transfer'])
-    # runner.invoke(cli, ['toggle-shuffle'])
-    # runner.invoke(cli, ['volume', '--absolute', '--', '90'])
-    # runner.invoke(cli, ['volume', '--', '-5'])
-    # runner.invoke(cli, ['pause-or-play'])
-#     # runner.invoke(cli, ['next'])
-#     # runner.invoke(cli, ['previous'])
-#     # play --query-type artist shakira
+    runner.invoke(cli, ['is-playing'])
 
 
 if __name__ == "__main__":
