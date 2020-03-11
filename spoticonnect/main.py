@@ -1,20 +1,41 @@
 #!/usr/bin/env python3
 import datetime
 import sys
-
+import spotipy
 import click
-from spoticonnect.configuration import Configuration
 
 
-@click.group()
+@click.group(invoke_without_command=True)
+@click.option('--token', envvar='SPOTICONNECT_TOKEN')
 @click.pass_context
-def cli(ctx):
+def cli(ctx, token):
     ctx.ensure_object(dict)
-    configuration = Configuration()
-    configuration.load()
-    sp = configuration.get_spotify()
-    ctx.obj['sp'] = sp
+    if ctx.invoked_subcommand != 'get-token':
+        if not token:
+            click.echo('Please run with subcommand get-token to setup the required token')
+            sys.exit(2)
+        # else there is a token
+        else:
+            sp = spotipy.Spotify(auth=token)
+            ctx.obj['sp'] = sp
 
+
+@cli.command()
+@click.option('--username', prompt=True)
+@click.option('--client-id', prompt=True)
+@click.option('--client-secret', prompt=True)
+@click.option('--redirect-uri', prompt=True)
+def get_token(username, client_id, client_secret, redirect_uri):
+    scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
+    token = spotipy.util.prompt_for_user_token(scope=scope,
+                                               username=username,
+                                               client_id=client_id,
+                                               client_secret=client_secret,
+                                               redirect_uri=redirect_uri)
+    click.echo("Please add an environment variable SPOTICONNECT_TOKEN with the value of the following toke:")
+    click.echo(token)
+    click.echo("For instance, add in your .zshenv:")
+    click.echo(f"export SPOTICONNECT_TOKEN={token}")
 
 @cli.command()
 @click.option('--query-type',
@@ -150,9 +171,9 @@ def is_playing(ctx):
 def main():
     from click.testing import CliRunner
     runner = CliRunner()
-    runner.invoke(cli, ['status', '{volume}'])
+    runner.invoke(cli, ['volume', '--', '-5'])
 
 
 if __name__ == "__main__":
-    main()
-    # cli()
+    # main()
+    cli()

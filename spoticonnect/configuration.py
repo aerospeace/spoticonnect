@@ -40,3 +40,14 @@ class Configuration:
                                                    redirect_uri=main_section['redirect_uri'],
                                                    cache_path=self.cache_file)
         return spotipy.Spotify(auth=token)
+
+    def get_token(self):
+        main_section = self.config['MAIN']
+        scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
+        token = spotipy.util.prompt_for_user_token(scope=scope,
+                                                   username=main_section['username'],
+                                                   client_id=main_section['client_id'],
+                                                   client_secret=main_section['client_secret'],
+                                                   redirect_uri=main_section['redirect_uri'],
+                                                   cache_path=self.cache_file)
+        return token
