@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -34,7 +34,7 @@ setup(
     python_requires='>=3.5',
     keywords='',
     packages=find_packages(exclude=['docs', 'tests*']),
-    entry_points={"console_scripts": ["spoticonnect = spoticonnect.main:main"]},
+    entry_points={"console_scripts": ["spoticonnect = spoticonnect.main:cli"]},
     include_package_data=True,
     author='Hicham Tahiri',
     install_requires=install_requires,

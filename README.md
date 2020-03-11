@@ -40,20 +40,7 @@ Run `spoticonnect` a first time to run the initial environment setup.
 
 Usage
 --------------------
-```
-Usage:
-    spoticonnect play [(album | artist | playlist | track | uri) <query>]
-    spoticonnect next
-    spoticonnect previous
-    spoticonnect replay
-    spoticonnect pause
-    spoticonnect stop
-    spoticonnect vol (show | up | down | set <amount>)
-    spoticonnect status
-    spoticonnect share (uri | href)
-    spoticonnect shuffle
-    spoticonnect repeat
-```
+spoticonnect --help for details
 
 
 Contributing

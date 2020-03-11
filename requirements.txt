@@ -1,5 +1,3 @@
-docopt
+click
 spotipy
-pyperclip
 appdirs
-colored

@@ -1,8 +1,7 @@
-import spotipy
 import configparser
+import spotipy
 from appdirs import AppDirs
 from pathlib import Path
-from spoticonnect.utils import print_status
 from spoticonnect import __name__ as app_name
 
 
@@ -22,7 +21,7 @@ class Configuration:
             self.set()
 
     def set(self):
-        print_status('Initial environment setup')
+        print('Initial environment setup')
         self.config['MAIN'] = {}
         self.config['MAIN']['username'] = input("Enter your username: ")
         self.config['MAIN']['client_id'] = input("Enter your client_id: ")
