@@ -117,7 +117,11 @@ def status(ctx, formatting):
                    'artist': currently_playing['item']['artists'][0]['name'],
                    'album': currently_playing['item']['album']['name'], 'track': currently_playing['item']['name'],
                    'progress': datetime.timedelta(milliseconds=currently_playing['progress_ms']),
-                   'length': datetime.timedelta(milliseconds=currently_playing['item']['duration_ms'])}
+                   'length': datetime.timedelta(milliseconds=currently_playing['item']['duration_ms']),
+                   'volume': ""}
+    if currently_playing['is_playing']:
+        current_playback = sp.current_playback()
+        format_dict['volume'] = current_playback['device']['volume_percent']
     click.echo(formatting.format(**format_dict))
 
 
@@ -146,9 +150,9 @@ def is_playing(ctx):
 def main():
     from click.testing import CliRunner
     runner = CliRunner()
-    runner.invoke(cli, ['is-playing'])
+    runner.invoke(cli, ['status', '{volume}'])
 
 
 if __name__ == "__main__":
-    # main()
-    cli()
+    main()
+    # cli()
