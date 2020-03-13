@@ -1,72 +1,85 @@
 #!/usr/bin/env python3
 import datetime
+import os
 import sys
 import spotipy
 import click
+import click_config_file
 from appdirs import AppDirs
 from spoticonnect import __name__ as app_name
-from pathlib import Path
-
+from configobj import ConfigObj
 
 # Set up default cache location to be used as default to the click group
 app_dirs = AppDirs(app_name)
 user_cache_dir = app_dirs.user_cache_dir
 default_cache_file = f"{user_cache_dir}/cache"
+# scope as defined per spotify to have access to all the required functionalities
 scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 
 
 @click.group(invoke_without_command=True)
 @click.option('--cache-file', default=default_cache_file, type=click.Path(file_okay=True, dir_okay=False))
 @click.option('--username', envvar='SPOTIPY_USERNAME', required=True,
-              help='Environment variable: SPOTIPY_USERNAME')
+              help='Environment variable: SPOTIPY_USERNAME', default="")
 @click.option('--client-id', envvar='SPOTIPY_CLIENT_ID', required=True,
-              help='Environment variable: SPOTIPY_CLIENT_ID')
+              help='Environment variable: SPOTIPY_CLIENT_ID', default="")
 @click.option('--client-secret', envvar='SPOTIPY_CLIENT_SECRET', required=True,
-              help='Environment variable: SPOTIPY_CLIENT_SECRET')
+              help='Environment variable: SPOTIPY_CLIENT_SECRET', default="")
 @click.option('--redirect-uri', envvar='SPOTIPY_REDIRECT_URI', required=True,
-              help='Environment variable: SPOTIPY_REDIRECT_URI')
+              help='Environment variable: SPOTIPY_REDIRECT_URI', default="")
+@click_config_file.configuration_option()
 @click.pass_context
 def cli(ctx, cache_file, username, client_id, client_secret, redirect_uri):
     ctx.ensure_object(dict)
-    ctx.obj['cache_file'] = cache_file
     ctx.obj['username'] = username
     ctx.obj['client_id'] = client_id
     ctx.obj['client_secret'] = client_secret
     ctx.obj['redirect_uri'] = redirect_uri
-    if ctx.invoked_subcommand != 'get-token':
-        # Weak check whether needs to be initialised: just checking whether the cache file exists!
-        if not Path(cache_file).is_file():
-            click.echo('Please run with subcommand get-token to setup the required token and cache path')
-            sys.exit(2)
-        else:
-            token = spotipy.util.prompt_for_user_token(scope=scope,
-                                                       username=username,
-                                                       client_id=client_id,
-                                                       client_secret=client_secret,
-                                                       redirect_uri=redirect_uri,
-                                                       cache_path=cache_file)
-            sp = spotipy.Spotify(auth=token)
-            ctx.obj['sp'] = sp
+    if ctx.invoked_subcommand == 'get-token':
+        # To Improve: we are passing the default config file to write in, even if another was provided in command line
+        config_file = os.path.join(click.get_app_dir(ctx.info_name), 'config')
+        ctx.obj['cache_file'] = cache_file
+        ctx.obj['config_file'] = config_file
+        return
+    if (not cache_file) or (not username) or (not client_id) or (not client_secret) or (not redirect_uri):
+        click.echo('Please re-run with subcommand \"get-token\" to setup the required credentials')
+        sys.exit(2)
+    # else everything setup, either through environment variable, config variable or directly in command line
+    token = spotipy.util.prompt_for_user_token(scope=scope,
+                                               username=username,
+                                               client_id=client_id,
+                                               client_secret=client_secret,
+                                               redirect_uri=redirect_uri,
+                                               cache_path=cache_file)
+    sp = spotipy.Spotify(auth=token)
+    ctx.obj['sp'] = sp
 
 
 @cli.command()
 @click.pass_context
 def get_token(ctx):
     cache_file = ctx.obj['cache_file']
-    username = ctx.obj['username']
-    client_id = ctx.obj['client_id']
-    client_secret = ctx.obj['client_secret']
-    redirect_uri = ctx.obj['redirect_uri']
+    config_file = ctx.obj['config_file']
+    username = ctx.obj['username'] or click.prompt('Please enter spotify username')
+    client_id = ctx.obj['client_id'] or click.prompt('Please enter spotify client_id')
+    client_secret = ctx.obj['client_secret'] or click.prompt('Please enter spotify client_secret')
+    redirect_uri = ctx.obj['redirect_uri'] or click.prompt('Please enter spotify redirect_uri')
     spotipy.util.prompt_for_user_token(scope=scope,
                                        username=username,
                                        client_id=client_id,
                                        client_secret=client_secret,
                                        redirect_uri=redirect_uri,
                                        cache_path=cache_file)
-    # click.echo("Please add an environment variable SPOTICONNECT_TOKEN with the value of the following toke:")
-    # click.echo(token)
-    # click.echo("For instance, add in your .zshenv:")
-    # click.echo(f"export SPOTICONNECT_TOKEN={token}")
+    # Note that for now the config is automatically saved in the default location!
+    config = ConfigObj(unrepr=True)
+    config.filename = config_file
+    config['cache_file'] = cache_file
+    config['username'] = username
+    config['client_id'] = client_id
+    config['client_secret'] = client_secret
+    config['redirect_uri'] = redirect_uri
+    config.write()
+
 
 @cli.command()
 @click.option('--query-type',
@@ -111,7 +124,7 @@ def replay(ctx):
 
 @cli.command()
 @click.pass_context
-def pause_or_play(ctx):  # not the command becomes pause-or-play
+def pause_or_play(ctx):  # note the command becomes pause-or-play
     sp = ctx.obj['sp']
     currently_playing = sp.currently_playing()
     if currently_playing['is_playing']:
@@ -136,7 +149,7 @@ def volume(ctx, relative, level):
 
 @cli.command()
 @click.pass_context
-def toggle_shuffle(ctx):  # not the command becomes toggle-shuffle
+def toggle_shuffle(ctx):  # note the command becomes toggle-shuffle
     sp = ctx.obj['sp']
     current_playback = sp.current_playback()
     old_shuffle_state = current_playback['shuffle_state']
@@ -146,7 +159,7 @@ def toggle_shuffle(ctx):  # not the command becomes toggle-shuffle
 
 @cli.command()
 @click.pass_context
-def toggle_repeat(ctx):  # not the command becomes toggle-shuffle
+def toggle_repeat(ctx):  # note the command becomes toggle-shuffle
     sp = ctx.obj['sp']
     current_playback = sp.current_playback()
     old_repeat_state = current_playback['repeat_state']
@@ -180,6 +193,7 @@ def status(ctx, formatting):
     click.echo(formatting.format(**format_dict))
 
 
+# To improve so that the default can be used by other people, probably through configuration file
 @cli.command()
 @click.argument('device_name', default="Echo Bedroom")
 @click.pass_context
@@ -209,5 +223,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
     cli()
