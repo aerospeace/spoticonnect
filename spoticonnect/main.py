@@ -209,6 +209,14 @@ def transfer(ctx, device_name):
 
 @cli.command()
 @click.pass_context
+def list_devices(ctx):
+    sp = ctx.obj['sp']
+    devices = sp.devices()['devices']
+    click.echo([device['name'] for device in devices])
+
+
+@cli.command()
+@click.pass_context
 def is_playing(ctx):
     sp = ctx.obj['sp']
     currently_playing = sp.currently_playing()
