@@ -195,15 +195,17 @@ def status(ctx, formatting):
 
 # To improve so that the default can be used by other people, probably through configuration file
 @cli.command()
-@click.argument('device_name', default="Echo Bedroom")
+@click.argument('device_name', default="Bedroom")
 @click.pass_context
 def transfer(ctx, device_name):
     sp = ctx.obj['sp']
     devices = sp.devices()['devices']
     # Cannot use next as been overriden with pause and play control
-    computer = (device for device in devices if device['type'] == 'Computer').__next__()
-    speaker = (device for device in devices if device['name'] == device_name).__next__()
-    device_id = speaker['id'] if computer['is_active'] else computer['id']
+    # computer = (device for device in devices if device['type'] == 'Computer').__next__()
+    # speaker = (device for device in devices if device['name'] == device_name).__next__()
+    # device_id = speaker['id'] if computer['is_active'] else computer['id']
+    device = (device for device in devices if device['name'] == device_name).__next__()
+    device_id = device['id']
     sp.transfer_playback(device_id)
 
 
