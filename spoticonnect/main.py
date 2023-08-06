@@ -17,6 +17,10 @@ default_cache_file = f"{user_cache_dir}/cache"
 scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 
 
+# Important: create the cache dirrectory if it does not exist
+if not os.path.exists(user_cache_dir):
+    os.makedirs(user_cache_dir)
+
 @click.group(invoke_without_command=True)
 @click.option('--cache-file', default=default_cache_file, type=click.Path(file_okay=True, dir_okay=False))
 @click.option('--username', envvar='SPOTIPY_USERNAME', required=True,
